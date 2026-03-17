@@ -1,0 +1,8 @@
+[
+  {"id": "female", "name": "Female Voice", "pitch": 1.2, "formant": 1.1},
+  {"id": "male", "name": "Male Voice", "pitch": 0.9, "formant": 0.9},
+  {"id": "kid", "name": "Kid Voice", "pitch": 1.5, "formant": 1.3},
+  {"id": "robot", "name": "Robot Voice", "pitch": 1.0, "formant": 0.8},
+  {"id": "alien", "name": "Alien Voice", "pitch": 1.35, "formant": 0.7},
+  {"id": "deep", "name": "Deep Voice", "pitch": 0.75, "formant": 0.85}
+]
