@@ -19,15 +19,12 @@ class AppTheme {
       ),
       scaffoldBackgroundColor:
           isDark ? const Color(0xFF0E0E1A) : const Color(0xFFF4F7FC),
-
-      // ✅ FIXED PART
       cardTheme: CardThemeData(
         color: isDark ? const Color(0xFF1A1C2B) : Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
       ),
-
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           shape: RoundedRectangleBorder(

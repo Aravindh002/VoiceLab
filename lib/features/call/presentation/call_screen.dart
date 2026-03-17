@@ -4,9 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../shared/models/voice_effect.dart';
 import '../../../shared/providers/call_provider.dart';
-import '../../../shared/providers/voice_effect_provider.dart';
 
 class CallScreen extends ConsumerStatefulWidget {
   const CallScreen({super.key});
@@ -17,11 +15,16 @@ class CallScreen extends ConsumerStatefulWidget {
 
 class _CallScreenState extends ConsumerState<CallScreen> {
   Timer? _timer;
+  int seconds = 0;
 
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      setState(() {
+        seconds++;
+      });
+    });
   }
 
   @override
@@ -32,12 +35,17 @@ class _CallScreenState extends ConsumerState<CallScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final call = ref.watch(activeCallProvider);
-    if (call == null) {
-      return const Scaffold(body: Center(child: Text('No active call')));
+    final call = ref.watch(callControllerProvider);
+
+    if (!call.isCalling) {
+      return const Scaffold(
+        body: Center(child: Text('No active call')),
+      );
     }
 
-    final elapsed = DateTime.now().difference(call.startedAt);
+    final minutes = (seconds ~/ 60).toString().padLeft(2, '0');
+    final secs = (seconds % 60).toString().padLeft(2, '0');
+
     return Scaffold(
       appBar: AppBar(title: const Text('Calling...')),
       body: Padding(
@@ -45,34 +53,40 @@ class _CallScreenState extends ConsumerState<CallScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(call.targetNumber, style: Theme.of(context).textTheme.headlineMedium),
+            Text(
+              call.phoneNumber ?? 'Unknown',
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
             const SizedBox(height: 12),
-            Text('${elapsed.inMinutes.toString().padLeft(2, '0')}:${(elapsed.inSeconds % 60).toString().padLeft(2, '0')}'),
+            Text('$minutes:$secs'),
             const SizedBox(height: 8),
-            Text('Effect: ${call.effect.name}'),
+            Text('Voice Mode: ${call.voiceMode}'),
             const SizedBox(height: 32),
             Wrap(
               spacing: 16,
               runSpacing: 12,
               children: [
-                _circleButton(icon: call.isMuted ? Icons.mic_off : Icons.mic, onTap: () => ref.read(activeCallProvider.notifier).toggleMute()),
-                _circleButton(icon: call.isSpeakerOn ? Icons.volume_up : Icons.hearing, onTap: () => ref.read(activeCallProvider.notifier).toggleSpeaker()),
+                _circleButton(
+                  icon: Icons.record_voice_over,
+                  onTap: () {
+                    ref
+                        .read(callControllerProvider.notifier)
+                        .changeVoice('Female');
+                  },
+                ),
                 _circleButton(
                   icon: Icons.graphic_eq,
                   onTap: () {
-                    final current = ref.read(selectedVoiceEffectProvider);
-                    final presets = VoiceEffect.presets;
-                    final currentIndex = presets.indexWhere((e) => e.id == current.id);
-                    final next = presets[(currentIndex + 1) % presets.length];
-                    ref.read(selectedVoiceEffectProvider.notifier).state = next;
-                    ref.read(activeCallProvider.notifier).changeEffect(next);
+                    ref
+                        .read(callControllerProvider.notifier)
+                        .changeVoice('Cartoon');
                   },
                 ),
                 _circleButton(
                   icon: Icons.call_end,
                   color: Colors.red,
                   onTap: () {
-                    ref.read(activeCallProvider.notifier).end();
+                    ref.read(callControllerProvider.notifier).endCall();
                     context.pop();
                   },
                 ),
@@ -84,7 +98,15 @@ class _CallScreenState extends ConsumerState<CallScreen> {
     );
   }
 
-  Widget _circleButton({required IconData icon, required VoidCallback onTap, Color? color}) {
-    return FloatingActionButton(onPressed: onTap, backgroundColor: color, child: Icon(icon));
+  Widget _circleButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    return FloatingActionButton(
+      onPressed: onTap,
+      backgroundColor: color,
+      child: Icon(icon),
+    );
   }
 }

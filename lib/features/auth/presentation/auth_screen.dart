@@ -1,5 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -16,8 +14,8 @@ class AuthScreen extends ConsumerStatefulWidget {
 }
 
 class _AuthScreenState extends ConsumerState<AuthScreen> {
-  final _phoneController = TextEditingController();
-  final _otpController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _otpController = TextEditingController();
 
   @override
   void dispose() {
@@ -31,64 +29,63 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final authState = ref.watch(authProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Phone Login'),
-      ),
+      appBar: AppBar(title: const Text('Phone Login')),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // 📱 Phone Input
+            /// 📱 Phone Field
             TextField(
               controller: _phoneController,
               keyboardType: TextInputType.phone,
               decoration: const InputDecoration(
                 labelText: 'Phone Number (+123...)',
-                border: OutlineInputBorder(),
               ),
             ),
 
             const SizedBox(height: 12),
 
-            // 🔐 OTP Input
+            /// 🔐 OTP Field
             TextField(
               controller: _otpController,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(
                 labelText: 'OTP',
-                border: OutlineInputBorder(),
               ),
             ),
 
             const SizedBox(height: 24),
 
-            // 🚀 Button
+            /// 🚀 Button
             GradientButton(
               label: authState.isLoading ? 'Verifying...' : 'Continue',
               icon: Icons.lock_open_rounded,
               onPressed: authState.isLoading
                   ? null
                   : () async {
-                      // 1. Check validation BEFORE the async gap
-                      if (!Validators.isValidPhone(_phoneController.text)) {
+                      final phone = _phoneController.text.trim();
+                      final otp = _otpController.text.trim();
+
+                      /// Validate
+                      if (!Validators.isValidPhone(phone)) {
+                        if (!mounted) return;
+
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Invalid phone number')),
                         );
                         return;
                       }
 
-                      // 2. Perform the async operation
-                      await ref.read(authProvider.notifier).loginWithOtp(
-                            _phoneController.text.trim(),
-                            _otpController.text.trim(),
-                          );
+                      /// Login
+                      await ref
+                          .read(authProvider.notifier)
+                          .loginWithOtp(phone, otp);
 
-                      // 3. THE FIX: Check mounted right after the await
-                      // This tells Flutter: "Only proceed if this widget is still on screen"
+                      /// IMPORTANT FIX
                       if (!mounted) return;
 
-                      // 4. Use the context directly, not via a saved 'ctx' variable
+                      /// Navigation (safe)
+                      // ignore: use_build_context_synchronously
                       context.go('/dialpad');
                     },
             ),

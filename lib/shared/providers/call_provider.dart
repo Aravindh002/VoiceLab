@@ -1,35 +1,59 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../services/call_manager.dart';
-import '../models/call_session.dart';
-import '../models/voice_effect.dart';
+/// Call State Model
+class CallState {
+  final bool isCalling;
+  final String? phoneNumber;
+  final String voiceMode;
 
-final callManagerProvider = Provider<CallManager>((ref) {
-  throw UnimplementedError(
-      'Provide Firebase dependencies in production setup.');
-});
+  CallState({
+    required this.isCalling,
+    this.phoneNumber,
+    this.voiceMode = 'Male',
+  });
 
-final activeCallProvider =
-    StateNotifierProvider<CallController, CallSession?>((ref) {
-  return CallController();
-});
+  CallState copyWith({
+    bool? isCalling,
+    String? phoneNumber,
+    String? voiceMode,
+  }) {
+    return CallState(
+      isCalling: isCalling ?? this.isCalling,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      voiceMode: voiceMode ?? this.voiceMode,
+    );
+  }
+}
 
-class CallController extends StateNotifier<CallSession?> {
-  CallController() : super(null);
+/// Call Controller
+class CallController extends StateNotifier<CallState> {
+  CallController() : super(CallState(isCalling: false));
 
-  Future<void> start(String number, VoiceEffect effect) async {
-    state = CallSession(
-        targetNumber: number, startedAt: DateTime.now(), effect: effect);
+  /// Start Call
+  void startCall(String number) {
+    state = state.copyWith(
+      isCalling: true,
+      phoneNumber: number,
+    );
   }
 
-  void toggleMute() =>
-      state = state?.copyWith(isMuted: !(state?.isMuted ?? false));
+  /// End Call
+  void endCall() {
+    state = state.copyWith(
+      isCalling: false,
+      phoneNumber: null,
+    );
+  }
 
-  void toggleSpeaker() =>
-      state = state?.copyWith(isSpeakerOn: !(state?.isSpeakerOn ?? false));
-
-  void changeEffect(VoiceEffect effect) =>
-      state = state?.copyWith(effect: effect);
-
-  void end() => state = null;
+  /// Change Voice Mode
+  void changeVoice(String mode) {
+    state = state.copyWith(
+      voiceMode: mode,
+    );
+  }
 }
+
+/// Provider
+final callControllerProvider = StateNotifierProvider<CallController, CallState>(
+  (ref) => CallController(),
+);
